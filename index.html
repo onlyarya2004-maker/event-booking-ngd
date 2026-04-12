@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Booking System</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      width: 520px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h2 { color: #555; }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #667eea;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #5a67d8;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #f4f4f4;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    li:hover {
+      background: #e0e7ff;
+      transform: scale(1.02);
+    }
+
+    .selected {
+      background: #667eea !important;
+      color: white;
+    }
+
+    .actions button {
+      margin-left: 5px;
+      font-size: 12px;
+    }
+
+    .empty-message {
+      background: #ffecec;
+      color: #d8000c;
+      text-align: center;
+      font-weight: bold;
+      cursor: default;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎟️ Event Booking System</h1>
+
+<h2>Events (Click to Select)</h2>
+<button onclick="loadEvents()">Load Events</button>
+<ul id="events"></ul>
+
+<h2>Create Booking</h2>
+<input id="userId" placeholder="User ID">
+<input id="eventId" placeholder="Event ID (auto-filled)" readonly>
+<input id="seats" placeholder="Seats">
+<br>
+<button onclick="createBooking()">Book Event</button>
+
+<h2>Bookings</h2>
+<button onclick="loadBookings()">Load Bookings</button>
+<ul id="bookings"></ul>
+
+</div>
+
+<script>
+const baseURL = "http://localhost:5000";
+
+// 🔥 STORE EVENT ID → NAME
+let eventsMap = {};
+
+// LOAD EVENTS
+async function loadEvents() {
+  const res = await fetch(baseURL + "/events");
+  const data = await res.json();
+
+  const list = document.getElementById("events");
+  list.innerHTML = "";
+
+  eventsMap = {};
+
+  data.forEach(event => {
+    eventsMap[event.id] = event.name;
+
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      <strong>${event.name || "No Name"}</strong><br>
+      📍 ${event.venue || "No Venue"} | 📅 ${event.date || ""}
+      <br>🎟️ Seats: ${event.availableSeats}/${event.totalSeats}
+    `;
+
+    // 🔥 SOLD OUT LOGIC
+    if (event.availableSeats === 0) {
+      li.innerHTML += "<br><b style='color:red'>Sold Out ❌</b>";
+      li.style.pointerEvents = "none";
+      li.style.opacity = "0.6";
+    }
+
+    li.onclick = () => {
+      document.getElementById("eventId").value = event.id;
+
+      document.querySelectorAll("#events li").forEach(el => {
+        el.classList.remove("selected");
+      });
+
+      li.classList.add("selected");
+    };
+
+    list.appendChild(li);
+  });
+}
+
+// CREATE BOOKING
+async function createBooking() {
+  const userId = document.getElementById("userId").value;
+  const eventId = document.getElementById("eventId").value;
+  const seats = document.getElementById("seats").value;
+
+  if (!userId || !eventId || !seats) {
+    alert("Fill all fields!");
+    return;
+  }
+
+  const response = await fetch(baseURL + "/bookings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId,
+      eventId,
+      seatsBooked: Number(seats)
+    })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    alert("❌ " + result.error);
+    return;
+  }
+
+  alert("✅ Booking created!");
+
+  document.getElementById("userId").value = "";
+  document.getElementById("eventId").value = "";
+  document.getElementById("seats").value = "";
+
+  loadEvents();
+  loadBookings(); // 🔥 auto refresh
+}
+
+// LOAD BOOKINGS
+async function loadBookings() {
+  const res = await fetch(baseURL + "/bookings");
+  const data = await res.json();
+
+  const list = document.getElementById("bookings");
+  list.innerHTML = "";
+
+  if (data.length === 0) {
+    const li = document.createElement("li");
+    li.innerText = "⚠️ No bookings have been made yet";
+    li.classList.add("empty-message");
+    list.appendChild(li);
+    return;
+  }
+
+  data.forEach(b => {
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      BookingID: ${b.id} <br>
+      Event: ${eventsMap[b.eventId] || b.eventId} <br>
+      Seats: ${b.seatsBooked}
+    `;
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const delBtn = document.createElement("button");
+    delBtn.innerText = "Delete";
+    delBtn.onclick = async () => {
+      await fetch(baseURL + "/bookings/" + b.id, { method: "DELETE" });
+      loadBookings();
+      loadEvents();
+    };
+
+    const updBtn = document.createElement("button");
+    updBtn.innerText = "Update";
+    updBtn.onclick = async () => {
+      const newSeats = prompt("Enter new seats:");
+      await fetch(baseURL + "/bookings/" + b.id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seatsBooked: Number(newSeats)
+        })
+      });
+      loadBookings();
+      loadEvents();
+    };
+
+    actions.appendChild(delBtn);
+    actions.appendChild(updBtn);
+
+    li.appendChild(actions);
+    list.appendChild(li);
+  });
+}
+</script>
+
+</body>
+</html>
