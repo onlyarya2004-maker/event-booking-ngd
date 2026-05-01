@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eventory — Event Booking Platform</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --bg-elev: #131316;
+      --bg-card: #18181c;
+      --bg-card-hover: #1f1f24;
+      --border: #26262c;
+      --border-strong: #35353d;
+      --text: #f5f5f7;
+      --text-muted: #9b9ba3;
+      --text-dim: #6b6b72;
+      --accent: #ff6b35;
+      --accent-hover: #ff8559;
+      --accent-soft: rgba(255, 107, 53, 0.12);
+      --success: #4ade80;
+      --success-soft: rgba(74, 222, 128, 0.12);
+      --danger: #f87171;
+      --danger-soft: rgba(248, 113, 113, 0.12);
+      --warning: #fbbf24;
+      --warning-soft: rgba(251, 191, 36, 0.12);
+
+      --display: 'Bricolage Grotesque', sans-serif;
+      --body: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 600px 400px at 15% 0%, rgba(255, 107, 53, 0.08), transparent 50%),
+        radial-gradient(ellipse 500px 350px at 85% 100%, rgba(74, 158, 255, 0.06), transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative; z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+    }
+
+    /* Top Nav */
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+
+    .brand-mark {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--bg);
+      font-family: var(--display);
+      font-weight: 800; font-size: 18px;
+    }
+
+    .brand-name {
+      font-family: var(--display);
+      font-weight: 700; font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px;
+      background: var(--success-soft);
+      border: 1px solid rgba(74, 222, 128, 0.25);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 500;
+      color: var(--success);
+      font-family: var(--mono);
+      transition: all 0.3s;
+    }
+
+    .status-pill.error {
+      background: var(--danger-soft);
+      border-color: rgba(248, 113, 113, 0.25);
+      color: var(--danger);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      background: currentColor;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Cart count chip in nav */
+    .cart-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(255, 107, 53, 0.3);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 600;
+      color: var(--accent);
+      font-family: var(--mono);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cart-chip:hover {
+      background: rgba(255, 107, 53, 0.2);
+    }
+
+    .cart-chip.empty {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text-dim);
+      cursor: default;
+    }
+
+    /* Hero */
+    .hero { margin-bottom: 56px; max-width: 720px; }
+
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 16px;
+    }
+
+    .hero-title {
+      font-family: var(--display);
+      font-size: clamp(40px, 6vw, 64px);
+      font-weight: 700; line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .hero-subtitle {
+      font-size: 17px; line-height: 1.6;
+      color: var(--text-muted);
+      max-width: 560px;
+    }
+
+    /* Sections */
+    .section-head {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-family: var(--display);
+      font-size: 28px; font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .section-meta {
+      font-family: var(--mono);
+      font-size: 12px; color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-family: var(--body);
+      font-size: 14px; font-weight: 600;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--bg-elev);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--bg-card-hover);
+      border-color: var(--text-dim);
+    }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1a0a04;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-icon-only { padding: 6px; min-width: 28px; height: 28px; }
+    .btn-icon { width: 14px; height: 14px; }
+
+    .btn-danger-ghost {
+      background: transparent;
+      border-color: rgba(248, 113, 113, 0.3);
+      color: var(--danger);
+    }
+
+    .btn-danger-ghost:hover:not(:disabled) {
+      background: var(--danger-soft);
+      border-color: var(--danger);
+    }
+
+    /* Cart Banner — replaces the old single-selection banner */
+    .cart-banner {
+      background: linear-gradient(135deg, rgba(255, 107, 53, 0.12), rgba(255, 107, 53, 0.04));
+      border: 1px solid rgba(255, 107, 53, 0.3);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: none;
+      align-items: center; justify-content: space-between;
+      gap: 12px;
+      animation: bannerIn 0.3s ease;
+    }
+
+    .cart-banner.visible { display: flex; }
+
+    @keyframes bannerIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cart-banner-info { flex: 1; min-width: 0; }
+
+    .cart-banner-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .cart-banner-name {
+      font-family: var(--display);
+      font-size: 15px; font-weight: 600;
+      color: var(--text);
+    }
+
+    .cart-banner-actions {
+      display: flex; gap: 8px;
+    }
+
+    /* Events Grid */
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 64px;
+    }
+
+    .event-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.5s ease backwards;
+    }
+
+    .event-card:nth-child(1) { animation-delay: 0.05s; }
+    .event-card:nth-child(2) { animation-delay: 0.1s; }
+    .event-card:nth-child(3) { animation-delay: 0.15s; }
+    .event-card:nth-child(4) { animation-delay: 0.2s; }
+    .event-card:nth-child(5) { animation-delay: 0.25s; }
+    .event-card:nth-child(6) { animation-delay: 0.3s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .event-card:hover:not(.sold-out) {
+      background: var(--bg-card-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+
+    .event-card.in-cart {
+      border-color: var(--accent);
+      background: linear-gradient(180deg, rgba(255, 107, 53, 0.08), transparent 60%), var(--bg-card);
+    }
+
+    .event-card.in-cart::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .event-card .cart-tick {
+      position: absolute;
+      top: 12px; right: 12px;
+      width: 22px; height: 22px;
+      background: var(--accent);
+      color: #1a0a04;
+      border-radius: 50%;
+      display: none;
+      align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      animation: tickPop 0.3s ease;
+    }
+
+    @keyframes tickPop {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+
+    .event-card.in-cart .cart-tick { display: flex; }
+
+    .event-card.sold-out { opacity: 0.55; cursor: not-allowed; }
+
+    .event-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .event-badge {
+      font-family: var(--mono);
+      font-size: 10px; font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .badge-available { background: var(--success-soft); color: var(--success); }
+    .badge-limited { background: var(--warning-soft); color: var(--warning); }
+    .badge-soldout { background: var(--danger-soft); color: var(--danger); }
+
+    .event-date {
+      font-family: var(--mono);
+      font-size: 12px; color: var(--text-dim);
+    }
+
+    .event-name {
+      font-family: var(--display);
+      font-size: 22px; font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .event-venue {
+      font-size: 14px; color: var(--text-muted);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .event-venue::before {
+      content: '';
+      width: 4px; height: 4px;
+      background: var(--text-dim);
+      border-radius: 50%;
+    }
+
+    .seats-bar { margin-bottom: 16px; }
+
+    .seats-track {
+      width: 100%; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .seats-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    .seats-fill.high { background: var(--success); }
+    .seats-fill.mid { background: var(--warning); }
+    .seats-fill.low { background: var(--danger); }
+
+    .seats-info {
+      display: flex; justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 11px; color: var(--text-dim);
+    }
+
+    .seats-info strong { color: var(--text); font-weight: 500; }
+
+    .event-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 13px; color: var(--text-muted);
+    }
+
+    .select-hint {
+      font-family: var(--mono);
+      font-size: 11px; color: var(--text-dim);
+      letter-spacing: 0.05em;
+      transition: color 0.15s;
+    }
+
+    .event-card.in-cart .select-hint { color: var(--accent); }
+
+    .empty-events {
+      grid-column: 1 / -1;
+      padding: 48px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* Lower grid */
+    .lower-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.4fr;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 1000px) {
+      .lower-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    .panel-title {
+      font-family: var(--display);
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+
+    .panel-subtitle {
+      font-size: 13px; color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .field label {
+      display: block;
+      font-size: 12px; font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+
+    .input::placeholder { color: var(--text-dim); }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--bg-card);
+    }
+
+    .input.error {
+      border-color: var(--danger);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    /* Cart items */
+    .cart-empty {
+      padding: 32px 24px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--text-dim);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .cart-items {
+      display: flex; flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .cart-item {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      animation: cartItemIn 0.25s ease;
+    }
+
+    .cart-item.has-error {
+      border-color: rgba(248, 113, 113, 0.4);
+    }
+
+    @keyframes cartItemIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cart-item-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .cart-item-info { flex: 1; min-width: 0; }
+
+    .cart-item-name {
+      font-family: var(--display);
+      font-size: 15px; font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 2px;
+    }
+
+    .cart-item-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cart-item-controls {
+      display: flex; align-items: center;
+      gap: 8px;
+    }
+
+    .seat-input {
+      width: 80px;
+      padding: 7px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .seat-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .seat-max {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .cart-item-error {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--danger);
+      font-family: var(--mono);
+    }
+
+    .cart-item-success {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--success);
+      font-family: var(--mono);
+    }
+
+    .cart-summary {
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .cart-summary strong {
+      font-family: var(--display);
+      font-size: 16px;
+      color: var(--accent);
+    }
+
+    /* Bookings list */
+    .bookings-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .booking-row {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+      transition: all 0.15s;
+    }
+
+    .booking-row:hover { border-color: var(--border-strong); }
+
+    .booking-info { flex: 1; min-width: 0; }
+
+    .booking-event {
+      font-family: var(--display);
+      font-size: 16px; font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .booking-meta {
+      display: flex; gap: 14px;
+      font-size: 12px; color: var(--text-muted);
+      font-family: var(--mono);
+      flex-wrap: wrap;
+    }
+
+    .booking-meta span { display: flex; align-items: center; gap: 4px; }
+    .booking-meta strong { color: var(--text); font-weight: 500; }
+
+    .booking-id {
+      color: var(--text-dim);
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .booking-actions { display: flex; gap: 6px; }
+
+    .booking-empty {
+      padding: 48px 24px;
+      text-align: center;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    /* Toasts */
+    .toast-container {
+      position: fixed;
+      top: 24px; right: 24px;
+      z-index: 1000;
+      display: flex; flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 14px 18px;
+      min-width: 280px; max-width: 380px;
+      display: flex; align-items: flex-start;
+      gap: 12px;
+      pointer-events: auto;
+      animation: slideIn 0.25s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+    .toast.info { border-left: 3px solid var(--accent); }
+    .toast.warning { border-left: 3px solid var(--warning); }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast-content { flex: 1; }
+    .toast-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .toast-message { font-size: 12px; color: var(--text-muted); }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      padding: 28px;
+      width: 100%; max-width: 420px;
+    }
+
+    .modal-title {
+      font-family: var(--display);
+      font-size: 22px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .modal-text {
+      font-size: 14px; color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex; justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 80px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    .footer-tags { display: flex; gap: 8px; }
+
+    .footer-tag {
+      padding: 3px 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-card-hover) 50%, var(--bg-card) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+      height: 200px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <nav class="nav">
+    <div class="brand">
+      <div class="brand-mark">E</div>
+      <div class="brand-name">Eventory</div>
+    </div>
+    <div class="nav-actions">
+      <span class="cart-chip empty" id="cartChip" onclick="scrollToCart()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span id="cartChipText">Cart empty</span>
+      </span>
+      <span class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="serverStatus">API: localhost:5000</span>
+      </span>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-eyebrow">Event Booking Platform</div>
+    <h1 class="hero-title">Book unforgettable <em>experiences</em>, instantly.</h1>
+    <p class="hero-subtitle">Discover events across the country. Add multiple events to your cart and book them all at once. Powered by Firebase Firestore and a Node.js backend.</p>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">Upcoming Events</h2>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <span class="section-meta" id="eventCount">— events</span>
+        <button class="btn btn-sm" onclick="loadEvents()">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Cart banner -->
+    <div class="cart-banner" id="cartBanner">
+      <div class="cart-banner-info">
+        <div class="cart-banner-label">In Your Cart</div>
+        <div class="cart-banner-name" id="cartBannerName">—</div>
+      </div>
+      <div class="cart-banner-actions">
+        <button class="btn btn-sm" onclick="scrollToCart()">View cart</button>
+        <button class="btn btn-sm btn-danger-ghost" onclick="clearCart(true)">Clear all</button>
+      </div>
+    </div>
+
+    <div class="events-grid" id="events">
+      <div class="empty-events">Loading events…</div>
+    </div>
+  </section>
+
+  <section id="bookingSection">
+    <div class="section-head">
+      <h2 class="section-title">Reservations</h2>
+      <span class="section-meta" id="bookingCount">— bookings</span>
+    </div>
+
+    <div class="lower-grid">
+      <!-- CART PANEL -->
+      <div class="panel" id="cartPanel">
+        <h3 class="panel-title">Your Cart</h3>
+        <p class="panel-subtitle">Tap event cards above to add them. Tap again to remove. Set seats per event below.</p>
+
+        <div class="field">
+          <label for="userId">User ID (applies to all reservations)</label>
+          <input id="userId" class="input" placeholder="Enter your user ID">
+        </div>
+
+        <div id="cartItemsContainer">
+          <div class="cart-empty" id="cartEmpty">
+            Your cart is empty. Click any event above to add it.
+          </div>
+          <div class="cart-items" id="cartItems" style="display: none;"></div>
+        </div>
+
+        <div class="cart-summary" id="cartSummary" style="display: none;">
+          <span><span id="cartItemCount">0</span> event(s) · <span id="cartSeatCount">0</span> total seats</span>
+          <strong id="cartTotal">—</strong>
+        </div>
+
+        <button class="btn btn-primary submit-btn" id="confirmBtn" onclick="confirmAll()" disabled>
+          Confirm Reservations
+        </button>
+      </div>
+
+      <!-- BOOKINGS LIST -->
+      <div>
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+          <button class="btn btn-sm" onclick="loadBookings()">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            Reload
+          </button>
+        </div>
+        <div class="bookings-list" id="bookings">
+          <div class="booking-empty">Loading reservations…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div>© 2026 Eventory · Built with Firestore + Node.js</div>
+    <div class="footer-tags">
+      <span class="footer-tag">v1.3.0</span>
+      <span class="footer-tag">CI/CD: Jenkins</span>
+    </div>
+  </footer>
+
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<div class="modal-backdrop" id="updateModal">
+  <div class="modal">
+    <h3 class="modal-title">Update Reservation</h3>
+    <p class="modal-text">Change the number of seats for this booking. Available inventory will be adjusted automatically.</p>
+    <div class="field">
+      <label for="newSeats">New Seat Count</label>
+      <input id="newSeats" class="input" type="number" min="1" placeholder="Enter new seat count">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmUpdate()">Update</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const baseURL = "http://localhost:5000";
+
+  // ========== STATE ==========
+  let eventsMap = {};       // { eventId: full event object }
+  let bookingsCache = [];   // last fetched bookings
+  // CART: array of { eventId, seats, status, errorMsg }
+  // status can be: 'pending' (default), 'success', 'error'
+  let cart = [];
+  let pendingUpdateId = null;
+
+  // ========== TOASTS ==========
+  function toast(type, title, message) {
+    const container = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+    `;
+    container.appendChild(t);
+    setTimeout(() => {
+      t.style.animation = 'slideIn 0.2s ease reverse';
+      setTimeout(() => t.remove(), 200);
+    }, 3500);
+  }
+
+  function setStatus(ok, text) {
+    const pill = document.getElementById('statusPill');
+    document.getElementById('serverStatus').textContent = text;
+    pill.classList.toggle('error', !ok);
+  }
+
+  function scrollToCart() {
+    document.getElementById('bookingSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ========== CART ==========
+  function isInCart(eventId) {
+    return cart.some(item => item.eventId === eventId);
+  }
+
+  function addToCart(eventId) {
+    const ev = eventsMap[eventId];
+    if (!ev) return;
+    if (isInCart(eventId)) return;
+    cart.push({
+      eventId,
+      seats: 1,
+      status: 'pending',
+      errorMsg: null
+    });
+    renderCart();
+    renderEvents();
+    updateCartChip();
+    updateCartBanner();
+  }
+
+  function removeFromCart(eventId) {
+    cart = cart.filter(item => item.eventId !== eventId);
+    renderCart();
+    renderEvents();
+    updateCartChip();
+    updateCartBanner();
+  }
+
+  function updateCartItemSeats(eventId, newSeats) {
+    const item = cart.find(c => c.eventId === eventId);
+    if (!item) return;
+    item.seats = Math.max(1, Number(newSeats) || 1);
+    item.status = 'pending';
+    item.errorMsg = null;
+    renderCartSummary();
+  }
+
+  function clearCart(announce = false) {
+    if (cart.length === 0) return;
+    cart = [];
+    renderCart();
+    renderEvents();
+    updateCartChip();
+    updateCartBanner();
+    if (announce) toast('info', 'Cart cleared', 'All events removed');
+  }
+
+  function updateCartChip() {
+    const chip = document.getElementById('cartChip');
+    const text = document.getElementById('cartChipText');
+    if (cart.length === 0) {
+      chip.classList.add('empty');
+      text.textContent = 'Cart empty';
+    } else {
+      chip.classList.remove('empty');
+      const total = cart.reduce((sum, i) => sum + i.seats, 0);
+      text.textContent = `${cart.length} event${cart.length > 1 ? 's' : ''} · ${total} seat${total > 1 ? 's' : ''}`;
+    }
+  }
+
+  function updateCartBanner() {
+    const banner = document.getElementById('cartBanner');
+    const name = document.getElementById('cartBannerName');
+    if (cart.length === 0) {
+      banner.classList.remove('visible');
+      return;
+    }
+    banner.classList.add('visible');
+    if (cart.length === 1) {
+      const ev = eventsMap[cart[0].eventId];
+      name.textContent = ev ? `${ev.name} — ${ev.venue || 'TBD'}` : cart[0].eventId;
+    } else {
+      const names = cart.map(c => eventsMap[c.eventId]?.name || 'event').slice(0, 3);
+      const extra = cart.length > 3 ? ` +${cart.length - 3} more` : '';
+      name.textContent = `${cart.length} events: ${names.join(', ')}${extra}`;
+    }
+  }
+
+  function renderCart() {
+    const container = document.getElementById('cartItems');
+    const empty = document.getElementById('cartEmpty');
+    const summary = document.getElementById('cartSummary');
+    const confirmBtn = document.getElementById('confirmBtn');
+
+    if (cart.length === 0) {
+      empty.style.display = 'block';
+      container.style.display = 'none';
+      summary.style.display = 'none';
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Confirm Reservations';
+      return;
+    }
+
+    empty.style.display = 'none';
+    container.style.display = 'flex';
+    summary.style.display = 'flex';
+    confirmBtn.disabled = false;
+
+    container.innerHTML = '';
+    cart.forEach(item => {
+      const ev = eventsMap[item.eventId];
+      const eventName = ev ? ev.name : `Event ${item.eventId.slice(-8)}`;
+      const venue = ev ? ev.venue : '—';
+      const date = ev ? ev.date : '—';
+      const maxSeats = ev ? ev.availableSeats : 0;
+
+      const row = document.createElement('div');
+      row.className = `cart-item ${item.status === 'error' ? 'has-error' : ''}`;
+      row.innerHTML = `
+        <div class="cart-item-header">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${eventName}</div>
+            <div class="cart-item-meta">
+              <span>${venue}</span>
+              <span>·</span>
+              <span>${date}</span>
+            </div>
+          </div>
+          <div class="cart-item-controls">
+            <input
+              class="seat-input"
+              type="number"
+              min="1"
+              max="${maxSeats}"
+              value="${item.seats}"
+              onchange="updateCartItemSeats('${item.eventId}', this.value)"
+              oninput="updateCartItemSeats('${item.eventId}', this.value)"
+              title="Seats">
+            <span class="seat-max">/ ${maxSeats}</span>
+            <button class="btn btn-sm btn-icon-only btn-danger-ghost"
+                    onclick="removeFromCart('${item.eventId}')"
+                    title="Remove from cart">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+        ${item.status === 'error' ? `<div class="cart-item-error">⚠ ${item.errorMsg}</div>` : ''}
+        ${item.status === 'success' ? `<div class="cart-item-success">✓ Booked successfully</div>` : ''}
+      `;
+      container.appendChild(row);
+    });
+
+    renderCartSummary();
+  }
+
+  function renderCartSummary() {
+    const totalSeats = cart.reduce((sum, i) => sum + Number(i.seats || 0), 0);
+    document.getElementById('cartItemCount').textContent = cart.length;
+    document.getElementById('cartSeatCount').textContent = totalSeats;
+    document.getElementById('cartTotal').textContent =
+      `${cart.length} reservation${cart.length !== 1 ? 's' : ''}`;
+    updateCartChip();
+  }
+
+  // ========== CONFIRM ALL (multi-booking) ==========
+  async function confirmAll() {
+    const userId = document.getElementById('userId').value.trim();
+    if (!userId) {
+      toast('error', 'Missing User ID', 'Please enter a User ID before confirming');
+      document.getElementById('userId').classList.add('error');
+      document.getElementById('userId').focus();
+      setTimeout(() => document.getElementById('userId').classList.remove('error'), 2000);
+      return;
+    }
+
+    if (cart.length === 0) {
+      toast('error', 'Cart empty', 'Add at least one event to your cart');
+      return;
+    }
+
+    // Validate seat counts
+    for (const item of cart) {
+      if (!item.seats || Number(item.seats) < 1) {
+        toast('error', 'Invalid seats', 'All cart items need at least 1 seat');
+        return;
+      }
+    }
+
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Processing…';
+
+    // Send all bookings in parallel — backend handles each independently
+    const results = await Promise.all(
+      cart.map(async (item) => {
+        try {
+          const res = await fetch(baseURL + '/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId,
+              eventId: item.eventId,
+              seatsBooked: Number(item.seats)
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            return { eventId: item.eventId, success: false, error: data.error || 'Failed' };
+          }
+          return { eventId: item.eventId, success: true };
+        } catch (err) {
+          return { eventId: item.eventId, success: false, error: 'Network error' };
+        }
+      })
+    );
+
+    // Update cart items with status
+    let successCount = 0;
+    let failCount = 0;
+    results.forEach(r => {
+      const item = cart.find(c => c.eventId === r.eventId);
+      if (!item) return;
+      if (r.success) {
+        item.status = 'success';
+        successCount++;
+      } else {
+        item.status = 'error';
+        item.errorMsg = r.error;
+        failCount++;
+      }
+    });
+
+    // Toasts based on outcome
+    if (failCount === 0) {
+      toast('success', 'All reservations confirmed',
+        `${successCount} booking${successCount !== 1 ? 's' : ''} created successfully`);
+    } else if (successCount === 0) {
+      toast('error', 'All reservations failed',
+        `${failCount} booking${failCount !== 1 ? 's' : ''} could not be created`);
+    } else {
+      toast('warning', 'Partial success',
+        `${successCount} confirmed, ${failCount} failed — see cart below`);
+    }
+
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirm Reservations';
+
+    // Remove successful items from cart, keep failed ones for retry
+    cart = cart.filter(item => item.status !== 'success');
+
+    // If all succeeded, also clear user id field for next batch
+    if (failCount === 0) {
+      document.getElementById('userId').value = '';
+    }
+
+    renderCart();
+
+    // Refresh data: events first (so map is populated), then bookings
+    await loadEvents();
+    await loadBookings();
+  }
+
+  // ========== LOAD EVENTS ==========
+  let eventsRaw = [];
+
+  async function loadEvents() {
+    const list = document.getElementById('events');
+    list.innerHTML = '<div class="skeleton" style="grid-column: 1 / -1;"></div>';
+
+    try {
+      const res = await fetch(baseURL + '/events');
+      if (!res.ok) throw new Error('Bad response');
+      const data = await res.json();
+      setStatus(true, 'API: localhost:5000');
+
+      eventsRaw = data;
+      eventsMap = {};
+      data.forEach(ev => { eventsMap[ev.id] = ev; });
+
+      // Drop cart items whose events vanished or are sold out
+      const before = cart.length;
+      cart = cart.filter(item => {
+        const ev = eventsMap[item.eventId];
+        return ev && ev.availableSeats > 0;
+      });
+      if (cart.length !== before) {
+        toast('warning', 'Cart updated', 'Some events became unavailable and were removed');
+      }
+
+      // Clamp seat counts to current availability
+      cart.forEach(item => {
+        const ev = eventsMap[item.eventId];
+        if (ev && item.seats > ev.availableSeats) {
+          item.seats = ev.availableSeats;
+        }
+      });
+
+      renderEvents();
+      renderCart();
+      updateCartBanner();
+      updateCartChip();
+      renderBookings();
+
+      return data;
+    } catch (err) {
+      list.innerHTML = '<div class="empty-events">⚠ Could not connect to server. Is the backend running on port 5000?</div>';
+      setStatus(false, 'API: offline');
+      toast('error', 'Connection failed', 'Backend unreachable');
+      return [];
+    }
+  }
+
+  function renderEvents() {
+    const list = document.getElementById('events');
+    list.innerHTML = '';
+
+    if (!eventsRaw.length) {
+      list.innerHTML = '<div class="empty-events">No events available right now</div>';
+      document.getElementById('eventCount').textContent = '0 events';
+      return;
+    }
+
+    document.getElementById('eventCount').textContent =
+      `${eventsRaw.length} event${eventsRaw.length !== 1 ? 's' : ''}`;
+
+    eventsRaw.forEach(event => {
+      const total = event.totalSeats || 0;
+      const avail = event.availableSeats || 0;
+      const pct = total ? (avail / total) * 100 : 0;
+
+      let badgeClass, badgeText, fillClass;
+      if (avail === 0) {
+        badgeClass = 'badge-soldout'; badgeText = 'Sold Out'; fillClass = 'low';
+      } else if (pct < 30) {
+        badgeClass = 'badge-limited'; badgeText = 'Few Left'; fillClass = 'low';
+      } else if (pct < 70) {
+        badgeClass = 'badge-limited'; badgeText = 'Filling Fast'; fillClass = 'mid';
+      } else {
+        badgeClass = 'badge-available'; badgeText = 'Available'; fillClass = 'high';
+      }
+
+      const inCart = isInCart(event.id);
+      const card = document.createElement('div');
+      card.className = `event-card ${avail === 0 ? 'sold-out' : ''} ${inCart ? 'in-cart' : ''}`;
+      card.dataset.eventId = event.id;
+
+      const hintText = avail === 0
+        ? '✕ UNAVAILABLE'
+        : (inCart ? '✓ IN CART · TAP TO REMOVE' : '↗ ADD TO CART');
+
+      card.innerHTML = `
+        <div class="cart-tick">✓</div>
+        <div class="event-header">
+          <span class="event-badge ${badgeClass}">${badgeText}</span>
+          <span class="event-date">${event.date || 'TBD'}</span>
+        </div>
+        <h3 class="event-name">${event.name || 'Untitled Event'}</h3>
+        <div class="event-venue">${event.venue || 'Venue TBD'}</div>
+        <div class="seats-bar">
+          <div class="seats-track">
+            <div class="seats-fill ${fillClass}" style="width: ${pct}%;"></div>
+          </div>
+          <div class="seats-info">
+            <span><strong>${avail}</strong> available</span>
+            <span>of ${total} total</span>
+          </div>
+        </div>
+        <div class="event-footer">
+          <span>${avail === 0 ? 'Currently unavailable' : (inCart ? 'In your cart' : 'Tap to add')}</span>
+          <span class="select-hint">${hintText}</span>
+        </div>
+      `;
+
+      if (avail > 0) {
+        card.onclick = () => {
+          if (isInCart(event.id)) {
+            removeFromCart(event.id);
+          } else {
+            addToCart(event.id);
+          }
+        };
+      }
+
+      list.appendChild(card);
+    });
+  }
+
+  // ========== LOAD BOOKINGS ==========
+  async function loadBookings() {
+    const list = document.getElementById('bookings');
+    list.innerHTML = '<div class="skeleton"></div>';
+
+    try {
+      const res = await fetch(baseURL + '/bookings');
+      if (!res.ok) throw new Error('Bad response');
+      const data = await res.json();
+      bookingsCache = data;
+      renderBookings();
+    } catch (err) {
+      list.innerHTML = '<div class="booking-empty">⚠ Could not load bookings</div>';
+      document.getElementById('bookingCount').textContent = '— bookings';
+    }
+  }
+
+  function renderBookings() {
+    const list = document.getElementById('bookings');
+    const data = bookingsCache;
+
+    list.innerHTML = '';
+
+    if (!data || !data.length) {
+      list.innerHTML = '<div class="booking-empty">No reservations yet — book your first event above</div>';
+      document.getElementById('bookingCount').textContent = '0 bookings';
+      return;
+    }
+
+    document.getElementById('bookingCount').textContent =
+      `${data.length} booking${data.length !== 1 ? 's' : ''}`;
+
+    data.forEach(b => {
+      const ev = eventsMap[b.eventId];
+      const eventName = ev ? ev.name : `Event ${(b.eventId || '').slice(-8)}`;
+      const venue = ev ? ev.venue : null;
+      const date = ev ? ev.date : null;
+
+      const row = document.createElement('div');
+      row.className = 'booking-row';
+      row.innerHTML = `
+        <div class="booking-info">
+          <div class="booking-event">${eventName}</div>
+          <div class="booking-meta">
+            <span><strong>${b.seatsBooked}</strong> seats</span>
+            ${venue ? `<span>${venue}</span>` : ''}
+            ${date ? `<span>${date}</span>` : ''}
+            <span class="booking-id">ID: ${b.id}</span>
+          </div>
+        </div>
+        <div class="booking-actions">
+          <button class="btn btn-sm" onclick="openUpdateModal('${b.id}')">Edit</button>
+          <button class="btn btn-sm btn-danger-ghost" onclick="deleteBooking('${b.id}')">Delete</button>
+        </div>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  // ========== DELETE ==========
+  async function deleteBooking(id) {
+    if (!confirm('Delete this reservation? Seats will be returned to inventory.')) return;
+    try {
+      const res = await fetch(baseURL + '/bookings/' + id, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      toast('success', 'Reservation cancelled', 'Seats returned to inventory');
+      await loadEvents();
+      await loadBookings();
+    } catch {
+      toast('error', 'Delete failed', 'Could not cancel reservation');
+    }
+  }
+
+  // ========== UPDATE MODAL ==========
+  function openUpdateModal(id) {
+    pendingUpdateId = id;
+    document.getElementById('newSeats').value = '';
+    document.getElementById('updateModal').classList.add('open');
+    setTimeout(() => document.getElementById('newSeats').focus(), 100);
+  }
+
+  function closeModal() {
+    document.getElementById('updateModal').classList.remove('open');
+    pendingUpdateId = null;
+  }
+
+  async function confirmUpdate() {
+    const newSeats = document.getElementById('newSeats').value;
+    if (!newSeats || Number(newSeats) < 1) {
+      toast('error', 'Invalid input', 'Enter a valid seat count');
+      return;
+    }
+
+    try {
+      const res = await fetch(baseURL + '/bookings/' + pendingUpdateId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seatsBooked: Number(newSeats) })
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        toast('error', 'Update failed', result.error || 'Could not update');
+        return;
+      }
+      toast('success', 'Reservation updated',
+        `Now booking ${newSeats} seat${newSeats !== '1' ? 's' : ''}`);
+      closeModal();
+      await loadEvents();
+      await loadBookings();
+    } catch {
+      toast('error', 'Update failed', 'Network error');
+    }
+  }
+
+  document.getElementById('updateModal').addEventListener('click', (e) => {
+    if (e.target.id === 'updateModal') closeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('updateModal').classList.contains('open')) {
+        closeModal();
+      } else if (cart.length > 0) {
+        clearCart(true);
+      }
+    }
+  });
+
+  // ========== INITIAL LOAD ==========
+  window.addEventListener('DOMContentLoaded', async () => {
+    await loadEvents();
+    await loadBookings();
+  });
+</script>
+
+</body>
+</html>
