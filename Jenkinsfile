@@ -11,99 +11,74 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout from GitHub') {
             steps {
                 echo '=========================================='
                 echo "  Build #${env.BUILD_NUMBER} for ${env.APP_NAME}"
+                echo "  CI/CD Pipeline triggered"
                 echo '=========================================='
-                echo "Pulling latest code from GitHub..."
+                echo "Pulling latest code from GitHub repository..."
                 checkout scm
-                echo 'Checkout complete.'
+                echo 'Code successfully fetched from GitHub.'
             }
         }
 
         stage('Show Latest Commit') {
             steps {
+                echo 'Verifying which commit triggered this build...'
                 bat '''
                     echo === LATEST COMMIT INFO ===
-                    git log -1 --pretty=format:"Commit:  %%H%%nAuthor:  %%an%%nDate:    %%ad%%nMessage: %%s"
+                    git log -1 --pretty=format:"Commit Hash: %%H%%nAuthor:      %%an%%nDate:        %%ad%%nMessage:     %%s"
                     echo.
                 '''
             }
         }
 
-        stage('Verify Environment') {
+        stage('Verify Build Environment') {
             steps {
-                echo 'Checking Node.js and npm versions...'
+                echo 'Checking Node.js and npm are available on this build agent...'
                 bat 'node --version'
                 bat 'npm --version'
+                echo 'Build environment verified.'
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Project Dependencies') {
             steps {
-                echo 'Installing project dependencies (npm install)...'
+                echo 'Running npm install to fetch project dependencies...'
                 bat 'npm install --no-audit --no-fund'
-                echo 'Dependencies installed successfully.'
+                echo 'All dependencies installed successfully.'
             }
         }
 
-        stage('Stop Old Server') {
+        stage('Sync Code to Deploy Folder') {
             steps {
-                echo "Stopping any old server on port 5000..."
+                echo 'Syncing fresh code to the deployment folder...'
                 bat """
-                    for /f "tokens=5" %%a in ('netstat -aon ^| findstr :5000 ^| findstr LISTENING') do (
-                        echo Killing PID %%a
-                        taskkill /F /PID %%a 2^>nul
-                    )
-                    echo Old server stopped (if any was running).
-                    exit /b 0
+                    echo Copying updated files from Jenkins workspace to deploy directory...
+                    xcopy /Y /Q "%WORKSPACE%\\index.html" "C:\\Users\\Arya\\Desktop\\event-booking-system\\"
+                    xcopy /Y /Q "%WORKSPACE%\\server.js" "C:\\Users\\Arya\\Desktop\\event-booking-system\\"
+                    xcopy /Y /Q "%WORKSPACE%\\package.json" "C:\\Users\\Arya\\Desktop\\event-booking-system\\"
+                    xcopy /Y /Q "%WORKSPACE%\\package-lock.json" "C:\\Users\\Arya\\Desktop\\event-booking-system\\"
+                    if exist "%WORKSPACE%\\Jenkinsfile" xcopy /Y /Q "%WORKSPACE%\\Jenkinsfile" "C:\\Users\\Arya\\Desktop\\event-booking-system\\"
+                    echo Files synced. The running server will pick up frontend changes immediately.
                 """
             }
         }
 
-        stage('Copy Credentials') {
+        stage('Verify Deployed App') {
             steps {
-                echo 'Copying serviceAccountKey.json from secure location...'
-                bat """
-                    if exist "C:\\jenkins-secrets\\serviceAccountKey.json" (
-                        copy /Y "C:\\jenkins-secrets\\serviceAccountKey.json" "%WORKSPACE%\\serviceAccountKey.json"
-                        echo Credentials copied successfully.
-                    ) else (
-                        echo WARNING: No serviceAccountKey.json found at C:\\jenkins-secrets\\
-                    )
-                    exit /b 0
-                """
-            }
-        }
-
-        stage('Deploy Server') {
-            steps {
-                echo 'Starting Eventory server as detached process...'
-                bat """
-                    powershell -Command "Start-Process -FilePath node -ArgumentList 'server.js' -WorkingDirectory '%WORKSPACE%' -RedirectStandardOutput '%WORKSPACE%\\server.log' -RedirectStandardError '%WORKSPACE%\\server.err.log' -WindowStyle Hidden"
-                    echo Waiting 6 seconds for server to boot...
-                    timeout /t 6 /nobreak > nul
-                    exit /b 0
-                """
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                echo "Verifying server is responding on http://localhost:5000/health ..."
+                echo "Health-checking the running app on http://localhost:5000/health ..."
                 bat """
                     curl -f -s http://localhost:5000/health
                     if %ERRORLEVEL% NEQ 0 (
-                        echo HEALTH CHECK FAILED!
-                        echo --- server.log ---
-                        if exist server.log type server.log
-                        echo --- server.err.log ---
-                        if exist server.err.log type server.err.log
+                        echo HEALTH CHECK FAILED - is the server running?
+                        echo Note: this build assumes the Eventory server is already running.
+                        echo Start it manually with: node server.js
                         exit /b 1
                     )
                     echo.
-                    echo Health check passed.
+                    echo Health check passed - app is responding.
                 """
             }
         }
@@ -113,8 +88,9 @@ pipeline {
         success {
             echo '=========================================='
             echo "  BUILD #${env.BUILD_NUMBER} SUCCEEDED"
-            echo "  Eventory is live at http://localhost:5000/"
-            echo "  (Server runs detached - survives after this build)"
+            echo "  Code from GitHub deployed successfully."
+            echo "  App is live at http://localhost:5000/"
+            echo "  Frontend changes (index.html) are picked up immediately."
             echo '=========================================='
         }
         failure {
