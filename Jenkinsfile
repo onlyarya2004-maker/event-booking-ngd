@@ -79,9 +79,9 @@ pipeline {
 
         stage('Deploy Server') {
             steps {
-                echo 'Starting Eventory server in background...'
+                echo 'Starting Eventory server as detached process...'
                 bat """
-                    start /B cmd /c "node server.js > server.log 2>&1"
+                    powershell -Command "Start-Process -FilePath node -ArgumentList 'server.js' -WorkingDirectory '%WORKSPACE%' -RedirectStandardOutput '%WORKSPACE%\\server.log' -RedirectStandardError '%WORKSPACE%\\server.err.log' -WindowStyle Hidden"
                     echo Waiting 6 seconds for server to boot...
                     timeout /t 6 /nobreak > nul
                     exit /b 0
@@ -96,8 +96,10 @@ pipeline {
                     curl -f -s http://localhost:5000/health
                     if %ERRORLEVEL% NEQ 0 (
                         echo HEALTH CHECK FAILED!
-                        echo --- server.log tail ---
-                        type server.log
+                        echo --- server.log ---
+                        if exist server.log type server.log
+                        echo --- server.err.log ---
+                        if exist server.err.log type server.err.log
                         exit /b 1
                     )
                     echo.
@@ -112,6 +114,7 @@ pipeline {
             echo '=========================================='
             echo "  BUILD #${env.BUILD_NUMBER} SUCCEEDED"
             echo "  Eventory is live at http://localhost:5000/"
+            echo "  (Server runs detached - survives after this build)"
             echo '=========================================='
         }
         failure {
